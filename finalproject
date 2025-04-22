@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Climber Journey</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: url('mountain_background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      text-align: center;
+      padding-top: 50px;
+    }
+    .screen {
+      max-width: 700px;
+      margin: auto;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 30px;
+      border-radius: 10px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen" id="game">
+    <h1>Climber Journey</h1>
+    <p id="prompt"></p>
+    <div id="choices"></div>
+    <p id="status"></p>
+    <button onclick="startGame()">Start Climb</button>
+  </div>
+
+  <script>
+    const prompts = [
+      ["You approach a fork: a steep snowfield ahead or a traverse to a ridge.",
+       ["Climb up the open steep snowfield.", "Traverse out to a lower ridge to go around the backside of the summit."], 0],
+
+      ["You have come upon a tight chute. However, there are people above you.",
+       ["Wait for them to finish climbing before you start ascending.", "Start climbing because you are on a time limit."], 0],
+
+      ["You can now see the summit. You think you should walk the ridge, but others took a different path.",
+       ["Follow the tracks.", "Walk the ridge and keep the summit in sight."], 1],
+
+      ["After a grueling climb, your partner is not feeling well. You're thinking about turning around.",
+       ["Ask her a series of questions to understand what is going on with her, then keep climbing.",
+        "Tell her that she knows her body's abilities better than anyone else and you trust her to keep climbing."], 0],
+
+      ["You're less than 100 yards from the summit, but snow is warming dangerously.",
+       ["You both make the decision to turn around despite being so close.",
+        "Finish the last bit of climb as you are so close."], 0]
+    ];
+
+    let current = 0;
+    let wrongChoices = 0;
+    const maxWrong = 4;
+    let decisionLog = [];
+
+    function startGame() {
+      current = 0;
+      wrongChoices = 0;
+      decisionLog = [];
+      document.querySelector("button").style.display = "none";
+      document.getElementById("status").innerText = "";
+      nextPrompt();
+    }
+
+    function nextPrompt() {
+      if (current >= prompts.length) {
+        endGame(true);
+        return;
+      }
+
+      const [text, choices, correct] = prompts[current];
+      document.getElementById("prompt").innerText = text;
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+
+      choices.forEach((choice, index) => {
+        const btn = document.createElement("button");
+        btn.innerText = choice;
+        btn.onclick = () => {
+          const isCorrect = index === correct;
+          decisionLog.push({ prompt: text, decision: choice, correct: isCorrect });
+
+          if (!isCorrect) {
+            if (current === 4) return endGame("summit_fail");
+            wrongChoices++;
+            if (wrongChoices >= maxWrong) return endGame(false);
+          }
+
+          current++;
+          nextPrompt();
+        };
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    function endGame(success) {
+      document.getElementById("prompt").innerText = success === true ?
+        "You reached the summit safely!" :
+        success === "summit_fail" ?
+        "You reached the summit, but died on descent. Snow became unstable." :
+        "Too many mistakes. You collapse shy of the summit.";
+
+      document.getElementById("choices").innerHTML = "<h3>Recap:</h3>" +
+        decisionLog.map((d, i) => `<p>Decision ${i + 1}: ${d.decision} (${d.correct ? "Correct" : "Wrong"})</p>`).join("");
+      document.querySelector("button").innerText = "Restart";
+      document.querySelector("button").style.display = "inline-block";
+    }
+  </script>
+</body>
+</html>
